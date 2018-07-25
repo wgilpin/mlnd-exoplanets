@@ -4,10 +4,10 @@ Will Gilpin
 July 25, 2018  
 
 # Detecting Exoplanets from NASA Kepler Data  
-## Proposal for A Capstone Project for the Udacity Machine Learning Engineer Nanodegree.  
+## Proposal for a Capstone Project for the Udacity Machine Learning Engineer Nanodegree.  
 
 ### Domain Background
-The Kepler mission was launched in 2009 in order to monitor approx. 150,000 in the areas of Cygnus & Lyra with the intention to detect earth-like planets in the stars' habitable zones [\[Barentsen, 2018\]][KEPLER1].  
+The Kepler mission was launched in 2009 in order to monitor approx. 150,000 stars in the areas of Cygnus & Lyra with the intention to detect earth-like planets in the stars' habitable zones [\[Barentsen, 2018\]][KEPLER1].  
 _(approx. 1-2 paragraphs)_
 
 In this section, provide brief details on the background information of the domain from which the project is proposed. Historical information relevant to the project should be included. It should be clear how or why a problem in the domain can or should be solved. Related academic research should be appropriately cited in this section, including why that research is relevant. Additionally, a discussion of your personal motivation for investigating a particular problem in the domain is encouraged but not required.
