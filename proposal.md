@@ -1,63 +1,98 @@
-# Machine Learning Engineer Nanodegree
-## Capstone Proposal
+# Detecting Exoplanets from NASA Kepler Data  
+
+**Machine Learning Engineer Nanodegree**  
+**Capstone Proposal**  
 Will Gilpin  
 July 25, 2018  
 
-# Detecting Exoplanets from NASA Kepler Data  
-## Proposal for a Capstone Project for the Udacity Machine Learning Engineer Nanodegree.  
 
 ### Domain Background
-The Kepler mission was launched in 2009 in order to monitor 156,000 stars in the areas of Cygnus & Lyra with the intention to detect earth-like planets in the stars' habitable zones [\[NASA, 2018\]][NASA1][\[Borucki, 2010\]][BORUCKI].  
-_(approx. 1-2 paragraphs)_
-
-In this section, provide brief details on the background information of the domain from which the project is proposed. Historical information relevant to the project should be included. It should be clear how or why a problem in the domain can or should be solved. Related academic research should be appropriately cited in this section, including why that research is relevant. Additionally, a discussion of your personal motivation for investigating a particular problem in the domain is encouraged but not required.
+One of the Great Questions of our time is that of the existence of non-terrestrial life. Of special relevance is the search for life from outside our solar system, as that would suggest a separate origin of that life, showing evolution has produced life at least twice, and therefore possibly many times. As part of this quest astronomers have been looking for planets with similar conditions to earth in terms of size, solidity and temperature range. Such planets will then become candidates for further investigation.  
+The Kepler mission was launched in 2009 in order to monitor 156,000 stars in the areas of Cygnus & Lyra with the intention of detecting earth-like planets in the stars' habitable zones [\[Borucki, 2010\]][BORUCKI]. The basic mechanism for detection is simple: monitor the light of a star over a period of time and look for periodic reduction in the brightness of the star for period in the range 2-16 hours [\[NASA, 2018\]][NASA1], this dimming being caused by the obscuration of a small fraction of the stars light during the planets transit between the observer and the star.  
+![Star light dimmed by transiting planet](./stellar-transit.png)  
+*Star light dimmed by transiting planet*  
 
 ### Problem Statement
-_(approx. 1 paragraph)_
 
-In this section, clearly describe the problem that is to be solved. The problem described should be well defined and should have at least one relevant potential solution. Additionally, describe the problem thoroughly such that it is clear that the problem is quantifiable (the problem can be expressed in mathematical or logical terms) , measurable (the problem can be measured by some metric and clearly observed), and replicable (the problem can be reproduced and occurs more than once).
+The problem is to identify stars with planets given time-series data of stellar brightness from stars in the Kepler survey.
+The approach is to find periodic brightness variations in the range of 2-16 hours which would therefore suggest a transiting orbital body.  
 
 ### Datasets and Inputs
-_(approx. 2-3 paragraphs)_
 
-In this section, the dataset(s) and/or input(s) being considered for the project should be thoroughly described, such as how they relate to the problem and why they should be used. Information such as how the dataset or input is (was) obtained, and the characteristics of the dataset or input, should be included with relevant references and citations as necessary It should be clear how the dataset(s) or input(s) will be used in the project and whether their use is appropriate given the context of the problem.
+The datasets being used are from NASA and were published for use in the Kaggle "Exoplanet Hunting" competition [\[Kaggle, 2018\]][Kaggle].  The data has been cleaned by removing sensor artefacts, translating to a linear scale, removing likely cosmic ray artefacts, removing background flux and summing values over the photometric aperture of the target star image. They are then further pre-processed to allow for focusing and pointing artefacts, and for gaps in the time series [\[Jenkins, 2018\]][JENKINS].  
+The structure of the dataset is simple. Each row consists of a single label, `LABEL`, then 3197 flux points in columns `FLUX.1` to `FLUX.3197` representing flux values from *t=1* to *t=3197*. The scale of the data points is unclear and will need normalising.
 
 ### Solution Statement
-_(approx. 1 paragraph)_
 
-In this section, clearly describe a solution to the problem. The solution should be applicable to the project domain and appropriate for the dataset(s) or input(s) given. Additionally, describe the solution thoroughly such that it is clear that the solution is quantifiable (the solution can be expressed in mathematical or logical terms) , measurable (the solution can be measured by some metric and clearly observed), and replicable (the solution can be reproduced and occurs more than once).
+There is an experimental element to this project, and so two approaches will be taken which may be joined later.
 
+Firstly the raw data will be pre-processed using Fourier transforms to identify cyclic features. A Fast Fourier Transform will provide additional features for the dataset based on any periodic elements in the data, and as the planets we are seeking have a clear range of orbital periods it may be of value [\[Garza, 2015\]][GARZA].
+Secondly a model will be constructed using 1D convolutional neural networks over the NASA time-series data, as per the approach in [\[Shallue, 2018\]][SHALLUE].  
+The output of each of these models will then be fed into a multi-input model for comparison (parallel sub-networks for the time-series data and the generated Fourier analysis) \[Chollet, 2018\].
+  
 ### Benchmark Model
-_(approximately 1-2 paragraphs)_
 
-In this section, provide the details for a benchmark model or result that relates to the domain, problem statement, and intended solution. Ideally, the benchmark model or result contextualizes existing methods or known information in the domain and problem given, which could then be objectively compared to the solution. Describe how the benchmark model or result is measurable (can be measured by some metric and clearly observed) with thorough detail.
+The model will be benchmarked against the labelled data supplied in the Kaggle dataset. The labels are as derived by the Kepler Science Processing Pipeline. The Kepler model is, by design, more sophisticated than the one proposed herein:
+ > Ancillary engineering data and diagnostic information
+extracted from the science data are used to remove systematic errors in the flux time series that are correlated with
+these data prior to searching for signatures of transiting planets with a wavelet-based, adaptive matched filter. Stars
+with signatures exceeding 7.1σ are subjected to a suite of statistical tests including an examination of each star’s
+centroid motion to reject false positives caused by background eclipsing binaries.  
+[\[Jenkins, 2010\]][JENKINS2010]
+
+This additional complexity allows us to be reasonably confident that the labels are accurate.
 
 ### Evaluation Metrics
-_(approx. 1-2 paragraphs)_
 
-In this section, propose at least one evaluation metric that can be used to quantify the performance of both the benchmark model and the solution model. The evaluation metric(s) you propose should be appropriate given the context of the data, the problem statement, and the intended solution. Describe how the evaluation metric(s) are derived and provide an example of their mathematical representations (if applicable). Complex evaluation metrics should be clearly defined and quantifiable (can be expressed in mathematical or logical terms).
+Evaluation of the model is relatively simple given that this is a binary classification task with labelled data. Given the large skew in the dataset towards `no planet` we need to balance precision and recall. For publication purposes we might opt for high precision, so that the positives are more likely to be true-positives. However for research purposes higher recall will positively identify more of the actual systems with planets, at the expense of false positives. These false positives might still, though, be good candidates for further investigation given that they show hints of periodicity.
+For the purposes of this project we will use the F1 score.
+
+![F1 Score](./Precision-Recall-F1.png)  
 
 ### Project Design
-_(approx. 1 page)_
 
-In this final section, summarize a theoretical workflow for approaching a solution given the problem. Provide thorough discussion for what strategies you may consider employing, what analysis of the data might be required before being used, or which algorithms will be considered for your implementation. The workflow and discussion that you provide should align with the qualities of the previous sections. Additionally, you are encouraged to include small visualizations, pseudocode, or diagrams to aid in describing the project design, but it is not required. The discussion should clearly outline your intended workflow of the capstone project.
+The design of the project follows these steps:
+
+  1. Augment the data for training. The dataset has only about 1% positives, so construct a more balanced training set by randomly removing a proportion of the true negatives (this will be hyperparameter controlled and subject to tuning)
+  2. Pre-process using Fourier transforms to identify cyclic features. A Fourier frequency analysis provides additional features, and as the planets we are seeking have a clear range of orbital periods it may be of value [\[Garza, 2015\]][GARZA].
+  3. **Primary Model 1** Train a sequential model on the Fourier frequency buckets.
+  4. **Primary Model 2** Train a second sequential model using 1D convolutions over the time-series data, as per the approach in [\[Shallue, 2018\]][SHALLUE].
+  5. Construct a multi-input model for comparison (parallel sub-networks for the time-series data and the generated Fourier analysis) \[Chollet, 2018\].
+  6. Tune the hyperparameters to optimise the results.
+  7. Select final model - which might be either of primary models, or the composite model, depending on performance.
+
+Note the primary models will each require an additional dense output layer if operating in isolation.
+
+![Keras Model Architecture](./Kepler-Keras.png)  
+*Keras Model Architecture*
 
 -----------
 
-**Before submitting your proposal, ask yourself. . .**
-
-- Does the proposal you have written follow a well-organized structure similar to that of the project template?
-- Is each section (particularly **Solution Statement** and **Project Design**) written in a clear, concise and specific fashion? Are there any ambiguous terms or phrases that need clarification?
-- Would the intended audience of your project be able to understand your proposal?
-- Have you properly proofread your proposal to assure there are minimal grammatical and spelling mistakes?
-- Are all the resources used for this project correctly cited and referenced?
+<div style="page-break-after: always;"></div>
 
 # References
-[KEPLER1]: https://keplerscience.arc.nasa.gov/objectives.html    
+[KEPLER1]: https://keplerscience.arc.nasa.gov/objectives.html  
 Barentsen, G. (2018). Mission objectives. [online] Kepler & K2. Available at: [keplerscience.arc.nasa.gov/objectives.html](https://keplerscience.arc.nasa.gov/objectives.html) [Accessed 25 Jul. 2018].  
 
 [BORUCKI]: https://doi.org/10.1126/science.1185402
-Borucki, W.J. et al., (2010). Kepler Planet-Detection Mission: Introduction and First Results. Science 327, 977–980. https://doi.org/10.1126/science.1185402
+Borucki, W.J. et al. (2010). Kepler Planet-Detection Mission: Introduction and First Results. Science 327, 977–980. [doi.org/10.1126/science.1185402](https://doi.org/10.1126/science.1185402)
+
+Chollet, F. (2018). Deep learning with Python. Manning, pp.238-240.
+
+[GARZA]: https://medium.com/@gabogarza/exoplanet-hunting-with-machine-learning-and-kepler-data-recall-100-155e1ddeaa95
+Garza, G. (2018). Exoplanet Hunting with Machine Learning and Kepler Data. [online] Medium. Available at: [medium.com/@gabogarza/exoplanet-hunting-with-machine-learning-and-kepler-data-recall-100-155e1ddeaa95](https://medium.com/@gabogarza/exoplanet-hunting-with-machine-learning-and-kepler-data-recall-100-155e1ddeaa95) [Accessed 26 Jul. 2018].
+
+[JENKINS]: https://keplerscience.arc.nasa.gov/data-products.html
+Jenkins, J. (2018). Kepler Data Processing Handbook. [ebook] NASA Ames Research Center, p.6. Available at: [archive.stsci.edu/kepler/manuals/KSCI-19081-002-KDPH.pdf](https://archive.stsci.edu/kepler/manuals/KSCI-19081-002-KDPH.pdf) [Accessed 26 Jul. 2018].
+
+[JENKINS2010]: https://doi.org/10.1088/2041-8205/713/2/L87
+Jenkins, J.M. et al. 2010. Overview of the Kepler Science Processing Pipeline. The Astrophysical Journal 713, L87–L91. https://doi.org/10.1088/2041-8205/713/2/L87
+
+[Kaggle]: https://www.kaggle.com/keplersmachines/kepler-labelled-time-series-data/home
+Kaggle. (2018). Kepler labelled time series data. [online] Available at: [www.kaggle.com/keplersmachines/kepler-labelled-time-series-data/home](https://www.kaggle.com/keplersmachines/kepler-labelled-time-series-data/home) [Accessed 26 Jul. 2018].  
 
 [NASA1]: https://www.nasa.gov/mission_pages/kepler/overview/index.html  
-NASA. (2018). Mission overview. [online] Available at: https://www.nasa.gov/mission_pages/kepler/overview/index.html [Accessed 26 Jul. 2018].  
+NASA. (2018). Mission overview. [online] Available at: [www.nasa.gov/mission_pages/kepler/overview/index.html](https://www.nasa.gov/mission_pages/kepler/overview/index.html) [Accessed 26 Jul. 2018].  
+
+[SHALLUE]: https://doi.org/10.3847/1538-3881/aa9e09  
+Shallue, C.J., Vanderburg, A. (2018). Identifying Exoplanets with Deep Learning: A Five-planet Resonant Chain around Kepler-80 and an Eighth Planet around Kepler-90. *The Astronomical Journal* 155, 94. https://doi.org/10.3847/1538-3881/aa9e09  
