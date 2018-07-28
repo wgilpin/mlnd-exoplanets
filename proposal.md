@@ -24,8 +24,7 @@ The data has been cleaned by removing sensor artefacts, translating to a linear 
 
 The structure of the training dataset is simple. The files are presented as CSV files, one training set `exoTrain` and one test set `exoTest`. In the files there is 1 observation time-series per row. There are 5087 rows in the `exoTrain` file, and 570 rows in the `exotest` file. Each row consists of a single label, `LABEL`, then 3197 flux points in columns `FLUX.1` to `FLUX.3197` representing flux values from *t=1* to *t=3197*.  
 
-
-![The exoTest Dataset](./exoTest-capture.png)  
+![The exoTest data file](./exoTest-capture.PNG)  
 *The exoTest.csv data file*  
 
 For this project we will generate training and validation datasets from the `exoTrain` dataset. Give the paucity of positive samples in the data, this will be manipulated so as to ensure a similar number of positives in each training set, by random sampling in the subsets of positive and negative samples. `exoTest` will be used as the test data. This can be achieved in code, or by use of an over-sampling library e.g. [\[Lemaitre, 2016\]][LEMAITRE].  
