@@ -14,13 +14,23 @@ The Kepler mission was launched in 2009 in order to monitor 156,000 stars in the
 
 ### Problem Statement
 
-The problem is to identify stars with planets given time-series data of stellar brightness from stars in the Kepler survey.
+The proposal is a two-class classification problem, to identify stars with planets given time-series data of stellar brightness from stars in the Kepler survey. The classification classes are "Planet Present" and "No Planet Present".
 The approach is to find periodic brightness variations in the range of 2-16 hours which would therefore suggest a transiting orbital body.  
+The input datasets being used are from NASA and were published for use in the Kaggle "Exoplanet Hunting" competition [\[Kaggle, 2018\]][Kaggle]. The output will be a single real number in the range [0.0 .. 1.0], representing the certainty of the presence of a planet.
 
 ### Datasets and Inputs
 
-The datasets being used are from NASA and were published for use in the Kaggle "Exoplanet Hunting" competition [\[Kaggle, 2018\]][Kaggle].  The data has been cleaned by removing sensor artefacts, translating to a linear scale, removing likely cosmic ray artefacts, removing background flux and summing values over the photometric aperture of the target star image. They are then further pre-processed to allow for focusing and pointing artefacts, and for gaps in the time series [\[Jenkins, 2018\]][JENKINS].  
-The structure of the dataset is simple. Each row consists of a single label, `LABEL`, then 3197 flux points in columns `FLUX.1` to `FLUX.3197` representing flux values from *t=1* to *t=3197*. The scale of the data points is unclear and will need normalising.
+The data has been cleaned by removing sensor artefacts, translating to a linear scale, removing likely cosmic ray artefacts, removing background flux and summing values over the photometric aperture of the target star image. They are then further pre-processed to allow for focusing and pointing artefacts, and for gaps in the time series [\[Jenkins, 2018\]][JENKINS].  
+
+The structure of the training dataset is simple. The files are presented as CSV files, one training set `exoTrain` and one test set `exoTest`. In the files there is 1 observation time-series per row. There are 5087 rows in the `exoTrain` file, and 570 rows in the `exotest` file. Each row consists of a single label, `LABEL`, then 3197 flux points in columns `FLUX.1` to `FLUX.3197` representing flux values from *t=1* to *t=3197*.  
+
+
+![The exoTest Dataset](./exoTest-capture.png)  
+*The exoTest.csv data file*  
+
+For this project we will generate training and validation datasets from the `exoTrain` dataset. Give the paucity of positive samples in the data, this will be manipulated so as to ensure a similar number of positives in each training set, by random sampling in the subsets of positive and negative samples. `exoTest` will be used as the test data. This can be achieved in code, or by use of an over-sampling library e.g. [\[Lemaitre, 2016\]][LEMAITRE].  
+
+The sampling interval for these Long Cadence files is a consistent 29.4 minutes or 56.7 mHz. The Nyquist frequency is 284 µHz [\[Murphy, 2018\]][MURPHY]. The variance of the flux measurements is wide and will need normalising.  
 
 ### Solution Statement
 
@@ -32,15 +42,15 @@ The output of each of these models will then be fed into a multi-input model for
   
 ### Benchmark Model
 
-The model will be benchmarked against the labelled data supplied in the Kaggle dataset. The labels are as derived by the Kepler Science Processing Pipeline. The Kepler model is, by design, more sophisticated than the one proposed herein:
+The model will be benchmarked against a random forest trained against the `exoTrain` training and evaluation sets as per the main model, then tested against `exoTest`. This will enable a direct comparison of performance between the benchmark model and the ANN model.  
+
+The data as supplied is fully labelled, so further comparison can be made with the analysis as performed by the Kepler Science Processing Pipeline. The Kepler model is, by design, more sophisticated than the one proposed herein:
  > Ancillary engineering data and diagnostic information
 extracted from the science data are used to remove systematic errors in the flux time series that are correlated with
 these data prior to searching for signatures of transiting planets with a wavelet-based, adaptive matched filter. Stars
 with signatures exceeding 7.1σ are subjected to a suite of statistical tests including an examination of each star’s
 centroid motion to reject false positives caused by background eclipsing binaries.  
 [\[Jenkins, 2010\]][JENKINS2010]
-
-This additional complexity allows us to be reasonably confident that the labels are accurate.
 
 ### Evaluation Metrics
 
@@ -55,7 +65,7 @@ The design of the project follows these steps:
 
   1. Augment the data for training. The dataset has only about 1% positives, so construct a more balanced training set by randomly removing a proportion of the true negatives (this will be hyperparameter controlled and subject to tuning)
   2. Pre-process using Fourier transforms to identify cyclic features. A Fourier frequency analysis provides additional features, and as the planets we are seeking have a clear range of orbital periods it may be of value [\[Garza, 2015\]][GARZA].
-  3. **Primary Model 1** Train a sequential model on the Fourier frequency buckets.
+  3. **Primary Model 1** Train a sequential model on the Fourier frequency buckets. This presents a design challenge in deciding the model architecture, for which we will use 1d convolutions, given the aim is to identify spikes which are appropriate convolutional targets. Alternatively an LSTM RNN or a simple dense network could be used. Advice would be welcome.  
   4. **Primary Model 2** Train a second sequential model using 1D convolutions over the time-series data, as per the approach in [\[Shallue, 2018\]][SHALLUE].
   5. Construct a multi-input model for comparison (parallel sub-networks for the time-series data and the generated Fourier analysis) \[Chollet, 2018\].
   6. Tune the hyperparameters to optimise the results.
@@ -90,6 +100,12 @@ Jenkins, J.M. et al. 2010. Overview of the Kepler Science Processing Pipeline. T
 
 [Kaggle]: https://www.kaggle.com/keplersmachines/kepler-labelled-time-series-data/home
 Kaggle. (2018). Kepler labelled time series data. [online] Available at: [www.kaggle.com/keplersmachines/kepler-labelled-time-series-data/home](https://www.kaggle.com/keplersmachines/kepler-labelled-time-series-data/home) [Accessed 26 Jul. 2018].  
+
+[LEMAITRE]: http://contrib.scikit-learn.org/imbalanced-learn/stable/over_sampling.html
+Lemaitre, G., Nogueira, F., Oliveira, D. and Aridas, C. (2016). Over-sampling — imbalanced-learn 0.3.0 documentation. [online] Contrib.scikit-learn.org. Available at: [contrib.scikit-learn.org/imbalanced-learn/stable/over_sampling.html](http://contrib.scikit-learn.org/imbalanced-learn/stable/over_sampling.html) [Accessed 28 Jul. 2018].
+
+[MURPHY]: https://arxiv.org/abs/1201.6184
+Murphy, S.J. (2012). An examination of some characteristics of Kepler Short and Long Cadence Data. Monthly Notices of the Royal Astronomical Society 422, 665–671. https://doi.org/10.1111/j.1365-2966.2012.20644.x
 
 [NASA1]: https://www.nasa.gov/mission_pages/kepler/overview/index.html  
 NASA. (2018). Mission overview. [online] Available at: [www.nasa.gov/mission_pages/kepler/overview/index.html](https://www.nasa.gov/mission_pages/kepler/overview/index.html) [Accessed 26 Jul. 2018].  
