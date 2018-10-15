@@ -6,8 +6,6 @@ Will Gilpin
 July 25, 2018  
 
 
-## Readme.md
-
 ### Setup
 The included Jupyter Notebook was run under a Google Cloud click-to-deploy instance of the `Deep Learning VM`.
 
