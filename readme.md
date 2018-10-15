@@ -9,7 +9,7 @@ July 25, 2018
 ## Readme.md
 
 ### Setup
-The include Jupyter Notebook was run under a Google Cloud click-to-deploy instance of the `Deep Learning VM`.
+The included Jupyter Notebook was run under a Google Cloud click-to-deploy instance of the `Deep Learning VM`.
 
 This instance included CUDA support for the 2 GPUS in use. If you are not using GPUs you will need to replace the `CuDNNLSTM` calls with basic LSTM calls.
 
